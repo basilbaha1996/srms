@@ -65,7 +65,7 @@ if(strlen($_SESSION['alogin']) == "") {
                                         <span class="bg-icon"><i class="fa fa-users"></i></span>
                                     </a>
                                     <div class="text-center" style="margin-top: 10px;">
-                                        <a href="advanced-reports-students.php" class="btn btn-primary btn-sm">Advanced
+                                        <a href="student_reports.php" class="btn btn-primary btn-sm">Advanced
                                             Reports</a>
                                     </div>
                                 </div>
@@ -85,7 +85,7 @@ if(strlen($_SESSION['alogin']) == "") {
                                         <span class="bg-icon"><i class="fa fa-ticket"></i></span>
                                     </a>
                                     <div class="text-center" style="margin-top: 10px;">
-                                        <a href="advanced-reports-subjects.php" class="btn btn-danger btn-sm">Advanced
+                                        <a href="subject-reports.php" class="btn btn-danger btn-sm">Advanced
                                             Reports</a>
                                     </div>
                                 </div>
@@ -105,7 +105,7 @@ if(strlen($_SESSION['alogin']) == "") {
                                         <span class="bg-icon"><i class="fa fa-bank"></i></span>
                                     </a>
                                     <div class="text-center" style="margin-top: 10px;">
-                                        <a href="advanced-reports-classes.php" class="btn btn-warning btn-sm">Advanced
+                                        <a href="class-reports.php" class="btn btn-warning btn-sm">Advanced
                                             Reports</a>
                                     </div>
                                 </div>

@@ -2,8 +2,7 @@
 session_start();
 error_reporting(0);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])=="")
-{   
+if(strlen($_SESSION['alogin'])=="") {   
     header("Location: index.php"); 
 }
 else {
@@ -32,6 +31,18 @@ if(isset($_POST['submit'])) {
     }
 }
 
+// Handle delete functionality
+if(isset($_POST['delete'])) {
+    $rowid = $_POST['id']; // Get the result id
+    foreach($_POST['id'] as $iid) {
+        $sql = "DELETE FROM tblresult WHERE id=:iid";
+        $query = $dbh->prepare($sql);
+        $query->bindParam(':iid', $iid, PDO::PARAM_STR);
+        $query->execute();
+        $msg = "Result deleted successfully";
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,6 +60,18 @@ if(isset($_POST['submit'])) {
     <link rel="stylesheet" href="css/select2/select2.min.css">
     <link rel="stylesheet" href="css/main.css" media="screen">
     <script src="js/modernizr/modernizr.min.js"></script>
+
+    <!-- JavaScript to handle confirmation alerts -->
+    <script type="text/javascript">
+    function confirmAction(action) {
+        if (action === 'update') {
+            return confirm('Are you sure you want to update the result?');
+        } else if (action === 'delete') {
+            return confirm('Are you sure you want to delete this result?');
+        }
+    }
+    </script>
+
 </head>
 
 <body class="top-navbar-fixed">
@@ -87,7 +110,7 @@ if(isset($_POST['submit'])) {
                                 <div class="panel">
                                     <div class="panel-heading">
                                         <div class="panel-title">
-                                            <h5>Update the Result info</h5>
+                                            <h5>Update or Delete the Result info</h5>
                                         </div>
                                     </div>
                                     <div class="panel-body">
@@ -216,8 +239,10 @@ if(isset($_POST['submit'])) {
 
                                             <div class="form-group">
                                                 <div class="col-sm-offset-2 col-sm-10">
-                                                    <button type="submit" name="submit"
-                                                        class="btn btn-primary">Update</button>
+                                                    <button type="submit" name="submit" class="btn btn-primary"
+                                                        onclick="return confirmAction('update');">Update</button>
+                                                    <button type="submit" name="delete" class="btn btn-danger"
+                                                        onclick="return confirmAction('delete');">Delete</button>
                                                 </div>
                                             </div>
                                         </form>
