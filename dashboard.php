@@ -125,7 +125,7 @@ if(strlen($_SESSION['alogin']) == "") {
                                         <span class="bg-icon"><i class="fa fa-file-text"></i></span>
                                     </a>
                                     <div class="text-center" style="margin-top: 10px;">
-                                        <a href="advanced-reports-results.php" class="btn btn-success btn-sm">Advanced
+                                        <a href="result-reports.php" class="btn btn-success btn-sm">Advanced
                                             Reports</a>
                                     </div>
                                 </div>

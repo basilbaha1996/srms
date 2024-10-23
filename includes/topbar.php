@@ -6,7 +6,7 @@
                     <img src="logo.jpeg" alt="School Logo"
                         style="height: 45px; width: auto; display: inline-block; vertical-align: middle; margin-right: 10px;">
                     <span style="display: inline-block; vertical-align: middle;">
-                        online school result management system || SYSTEMS SCHOOL
+                        student result management system || SYSTEMS SCHOOL
                     </span>
                 </a>
                 <span class="small-nav-handle hidden-sm hidden-xs"><i class="fa fa-outdent"></i></span>
