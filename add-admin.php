@@ -90,7 +90,7 @@ else {
                                         </div>
                                         <?php } else if(isset($error)){ ?>
                                         <div class="alert alert-danger">
-                                            <strong>Oh snap!</strong> <?php echo htmlentities($error); ?>
+                                            <strong>error!</strong> <?php echo htmlentities($error); ?>
                                         </div>
                                         <?php } ?>
 

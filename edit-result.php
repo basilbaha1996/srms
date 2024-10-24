@@ -12,29 +12,41 @@ $exam_category = isset($_POST['exam_category']) ? $_POST['exam_category'] : ''; 
 
 if(isset($_POST['submit'])) {
 
-    $rowid = $_POST['id'];
-    $marks = $_POST['marks']; 
-    $exam_category = $_POST['exam_category']; // Get the exam category from form
+    $rowid = $_POST['id'] ?? [];
+    $marks = $_POST['marks'] ?? []; 
+    $exam_category = $_POST['exam_category'] ?? ''; // Get the exam category from form
 
-    foreach($_POST['id'] as $count => $id) {
-        $mrks = $marks[$count];
-        $iid = $rowid[$count];
-        
-        $sql = "UPDATE tblresult SET marks=:mrks WHERE id=:iid AND exam_category=:exam_category";
-        $query = $dbh->prepare($sql);
-        $query->bindParam(':mrks', $mrks, PDO::PARAM_STR);
-        $query->bindParam(':iid', $iid, PDO::PARAM_STR);
-        $query->bindParam(':exam_category', $exam_category, PDO::PARAM_STR);
-        $query->execute();
+    // Debugging: Check if exam_category and other inputs are set
+    // echo "<pre>";
+    // echo "Submitted Data: ";
+    // print_r($_POST);  // To display all submitted form data
+    // echo "</pre>";
 
-        $msg = "Result info updated successfully";
+    if(empty($rowid) || empty($marks) || empty($exam_category)) {
+        $error = "Missing data! Please make sure all fields are filled correctly.";
+    } else {
+        foreach($_POST['id'] as $count => $id) {
+            $mrks = $marks[$count] ?? null;
+            $iid = $rowid[$count] ?? null;
+            
+            // Only update if we have valid marks and id
+            if($mrks !== null && $iid !== null) {
+                $sql = "UPDATE tblresult SET marks=:mrks WHERE id=:iid AND exam_category=:exam_category";
+                $query = $dbh->prepare($sql);
+                $query->bindParam(':mrks', $mrks, PDO::PARAM_STR);
+                $query->bindParam(':iid', $iid, PDO::PARAM_STR);
+                $query->bindParam(':exam_category', $exam_category, PDO::PARAM_STR);
+                $query->execute();
+                $msg = "Result info updated successfully";
+            }
+        }
     }
 }
 
 // Handle delete functionality
 if(isset($_POST['delete'])) {
-    $rowid = $_POST['id']; // Get the result id
-    foreach($_POST['id'] as $iid) {
+    $rowid = $_POST['id'] ?? []; // Get the result id
+    foreach($rowid as $iid) {
         $sql = "DELETE FROM tblresult WHERE id=:iid";
         $query = $dbh->prepare($sql);
         $query->bindParam(':iid', $iid, PDO::PARAM_STR);
@@ -54,10 +66,6 @@ if(isset($_POST['delete'])) {
     <title>SMS Admin | Student result info</title>
     <link rel="stylesheet" href="css/bootstrap.min.css" media="screen">
     <link rel="stylesheet" href="css/font-awesome.min.css" media="screen">
-    <link rel="stylesheet" href="css/animate-css/animate.min.css" media="screen">
-    <link rel="stylesheet" href="css/lobipanel/lobipanel.min.css" media="screen">
-    <link rel="stylesheet" href="css/prism/prism.css" media="screen">
-    <link rel="stylesheet" href="css/select2/select2.min.css">
     <link rel="stylesheet" href="css/main.css" media="screen">
     <script src="js/modernizr/modernizr.min.js"></script>
 
@@ -71,18 +79,15 @@ if(isset($_POST['delete'])) {
         }
     }
     </script>
-
 </head>
 
 <body class="top-navbar-fixed">
     <div class="main-wrapper">
-
         <!-- ========== TOP NAVBAR ========== -->
         <?php include('includes/topbar.php'); ?>
         <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
         <div class="content-wrapper">
             <div class="content-container">
-
                 <!-- ========== LEFT SIDEBAR ========== -->
                 <?php include('includes/leftbar.php'); ?>
                 <!-- /.left-sidebar -->
@@ -120,7 +125,7 @@ if(isset($_POST['delete'])) {
                                         </div>
                                         <?php } else if($error){ ?>
                                         <div class="alert alert-danger left-icon-alert" role="alert">
-                                            <strong>Oh snap!</strong> <?php echo htmlentities($error); ?>
+                                            <strong>error!</strong> <?php echo htmlentities($error); ?>
                                         </div>
                                         <?php } ?>
 
@@ -153,6 +158,10 @@ if(isset($_POST['delete'])) {
 
                                         <!-- Display student and result info -->
                                         <form class="form-horizontal" method="post">
+                                            <!-- Hidden input to store the exam category -->
+                                            <input type="hidden" name="exam_category"
+                                                value="<?php echo htmlentities($exam_category); ?>">
+
                                             <?php
                                                 // Fetch student details
                                                 $ret = "SELECT tblstudents.StudentName, tblclasses.ClassName, tblclasses.Section 
@@ -231,8 +240,7 @@ if(isset($_POST['delete'])) {
                                                 <label for="percentage"
                                                     class="col-sm-2 control-label">Percentage</label>
                                                 <div class="col-sm-10">
-                                                    <?php echo htmlentities(($totalMarks / ($subjectCount * 100)) * 100); ?>
-                                                    %
+                                                    <?php echo htmlentities(($totalMarks / ($subjectCount * 100)) * 100); ?>%
                                                 </div>
                                             </div>
                                             <?php } ?>
@@ -259,11 +267,6 @@ if(isset($_POST['delete'])) {
     <!-- JS -->
     <script src="js/jquery/jquery-2.2.4.min.js"></script>
     <script src="js/bootstrap/bootstrap.min.js"></script>
-    <script src="js/pace/pace.min.js"></script>
-    <script src="js/lobipanel/lobipanel.min.js"></script>
-    <script src="js/iscroll/iscroll.js"></script>
-    <script src="js/prism/prism.js"></script>
-    <script src="js/select2/select2.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 

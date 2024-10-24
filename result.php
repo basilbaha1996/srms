@@ -17,11 +17,47 @@ include('includes/config.php');
     <link rel="stylesheet" href="css/lobipanel/lobipanel.min.css" media="screen">
     <link rel="stylesheet" href="css/prism/prism.css" media="screen">
     <link rel="stylesheet" href="css/main.css" media="screen">
+    <link rel="icon" type="image/x-icon" href="favico.png">
+
     <script src="js/modernizr/modernizr.min.js"></script>
+
+    <!-- Custom CSS for the header -->
+    <style>
+    .header {
+        background-color: white;
+        padding: 20px 0;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .header img {
+        width: 80px;
+        margin-right: 20px;
+    }
+
+    .header h1 {
+        font-size: 40px;
+        margin: 0;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .subheader {
+        font-size: 24px;
+        margin-top: 10px;
+    }
+    </style>
 </head>
 
 <body>
     <div class="main-wrapper">
+        <!-- ========== HEADER WITH LARGE LOGO AND TITLE ========== -->
+        <div class="header">
+            <img src="logo.jpeg" alt="School Logo">
+            <h1>SYSTEMS SCHOOL</h1>
+            <img src="logo.jpeg" alt="School Logo">
+        </div>
+
         <div class="content-wrapper">
             <div class="content-container">
                 <div class="main-page">
@@ -41,39 +77,33 @@ include('includes/config.php');
                                         <div class="panel-heading">
                                             <div class="panel-title">
                                                 <?php
-                                                    // Fetch student and class info
-                                                    $rollid = $_POST['rollid'];
-                                                    $classid = $_POST['class'];
-                                                    $exam_category = $_POST['exam_category'];  // Get the exam category
-                                                    
-                                                    $_SESSION['rollid'] = $rollid;
-                                                    $_SESSION['classid'] = $classid;
+                                                // Fetch student and class info
+                                                $rollid = $_POST['rollid'];
+                                                $classid = $_POST['class'];
+                                                $exam_category = $_POST['exam_category'];  // Get the exam category
+                                                
+                                                $_SESSION['rollid'] = $rollid;
+                                                $_SESSION['classid'] = $classid;
 
-                                                    // Debugging: Print input values
-                                                    echo "Roll ID: " . $rollid . "<br>";
-                                                    echo "Class ID: " . $classid . "<br>";
-                                                    echo "Exam Category: " . $exam_category . "<br>";
+                                                $query = "SELECT tblstudents.StudentName, tblstudents.RollId, tblstudents.RegDate, tblstudents.StudentId, tblstudents.Status, tblclasses.ClassName, tblclasses.Section 
+                                                          FROM tblstudents 
+                                                          JOIN tblclasses ON tblclasses.id = tblstudents.ClassId 
+                                                          WHERE tblstudents.RollId = :rollid AND tblstudents.ClassId = :classid";
+                                                $stmt = $dbh->prepare($query);
+                                                $stmt->bindParam(':rollid', $rollid, PDO::PARAM_STR);
+                                                $stmt->bindParam(':classid', $classid, PDO::PARAM_STR);
+                                                $stmt->execute();
+                                                $resultss = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-                                                    $query = "SELECT tblstudents.StudentName, tblstudents.RollId, tblstudents.RegDate, tblstudents.StudentId, tblstudents.Status, tblclasses.ClassName, tblclasses.Section 
-                                                              FROM tblstudents 
-                                                              JOIN tblclasses ON tblclasses.id = tblstudents.ClassId 
-                                                              WHERE tblstudents.RollId = :rollid AND tblstudents.ClassId = :classid";
-                                                    $stmt = $dbh->prepare($query);
-                                                    $stmt->bindParam(':rollid', $rollid, PDO::PARAM_STR);
-                                                    $stmt->bindParam(':classid', $classid, PDO::PARAM_STR);
-                                                    $stmt->execute();
-                                                    $resultss = $stmt->fetchAll(PDO::FETCH_OBJ);
-                                                    $cnt = 1;
-
-                                                    if ($stmt->rowCount() > 0) {
-                                                        foreach ($resultss as $row) { ?>
+                                                if ($stmt->rowCount() > 0) {
+                                                    foreach ($resultss as $row) { ?>
                                                 <p><b>Student Name :</b> <?php echo htmlentities($row->StudentName);?>
                                                 </p>
                                                 <p><b>Student Roll Id :</b> <?php echo htmlentities($row->RollId);?></p>
-                                                <p><b>Student Class:</b> <?php echo htmlentities($row->ClassName);?>
-                                                    (<?php echo htmlentities($row->Section);?>)</p>
-                                                <?php } ?>
-
+                                                <p><b>Student Class:</b>
+                                                    <?php echo htmlentities($row->ClassName);?>(<?php echo htmlentities($row->Section);?>)
+                                                </p>
+                                                <?php } } ?>
                                             </div>
                                         </div>
                                         <div class="panel-body p-20">
@@ -100,14 +130,8 @@ include('includes/config.php');
                                                     $query->bindParam(':rollid', $rollid, PDO::PARAM_STR);
                                                     $query->bindParam(':classid', $classid, PDO::PARAM_STR);
                                                     $query->bindParam(':exam_category', $exam_category, PDO::PARAM_STR);
-
-                                                    // Debugging: Print SQL query
-                                                    if ($query->execute()) {
-                                                        $results = $query->fetchAll(PDO::FETCH_OBJ);
-                                                    } else {
-                                                        $error = $query->errorInfo();
-                                                        print_r($error);
-                                                    }
+                                                    $query->execute();
+                                                    $results = $query->fetchAll(PDO::FETCH_OBJ);
 
                                                     $cnt = 1;
                                                     $totlcount = 0;
@@ -124,8 +148,7 @@ include('includes/config.php');
                                                     <?php 
                                                             $totlcount += $totalmarks;
                                                             $cnt++;
-                                                        }
-                                                        ?>
+                                                        } ?>
                                                     <tr>
                                                         <th scope="row" colspan="2">Total Marks</th>
                                                         <td><b><?php echo htmlentities($totlcount); ?></b> out of
@@ -134,8 +157,29 @@ include('includes/config.php');
                                                     </tr>
                                                     <tr>
                                                         <th scope="row" colspan="2">Percentage</th>
-                                                        <td><b><?php echo htmlentities($totlcount * (100) / $outof); ?>
+                                                        <td><b><?php echo htmlentities($percentage = ($totlcount * (100) / $outof)); ?>
                                                                 %</b></td>
+                                                    </tr>
+
+                                                    <!-- Add Evaluation based on percentage -->
+                                                    <tr>
+                                                        <th scope="row" colspan="2">Evaluation</th>
+                                                        <td><b>
+                                                                <?php
+                                                            if ($percentage >= 90) {
+                                                                echo "Excellent";
+                                                            } elseif ($percentage >= 76) {
+                                                                echo "Very Good";
+                                                            } elseif ($percentage >= 66) {
+                                                                echo "Good";
+                                                            } elseif ($percentage >= 50) {
+                                                                echo "Acceptable";
+                                                            } else {
+                                                                echo "Fail";
+                                                            }
+                                                            ?>
+                                                            </b>
+                                                        </td>
                                                     </tr>
                                                     <tr>
                                                         <th scope="row" colspan="2">Download Result</th>
@@ -173,10 +217,3 @@ include('includes/config.php');
 </body>
 
 </html>
-
-<?php 
-} else { ?>
-<div class="alert alert-danger left-icon-alert" role="alert">
-    <strong>Oh snap!</strong> Invalid Roll Id or Class.
-</div>
-<?php } ?>

@@ -111,12 +111,12 @@ else {
                                             }
                                             if (isset($_SESSION['error'])) {
                                                 echo '<div class="alert alert-danger left-icon-alert" role="alert">
-                                                <strong>Oh snap!</strong> ' . $_SESSION['error'] . '</div>';
+                                                <strong>error!</strong> ' . $_SESSION['error'] . '</div>';
                                                 unset($_SESSION['error']);
                                             }
                                             if (isset($error)) {
                                                 echo '<div class="alert alert-danger left-icon-alert" role="alert">
-                                                <strong>Oh snap!</strong> ' . $error . '</div>';
+                                                <strong>error!</strong> ' . $error . '</div>';
                                             }
                                             ?>
 

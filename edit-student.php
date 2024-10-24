@@ -111,7 +111,7 @@ if(strlen($_SESSION['alogin']) == "") {
                                         </div>
                                         <?php } else if($error){ ?>
                                         <div class="alert alert-danger left-icon-alert" role="alert">
-                                            <strong>Oh snap!</strong> <?php echo htmlentities($error); ?>
+                                            <strong>error!</strong> <?php echo htmlentities($error); ?>
                                         </div>
                                         <?php } ?>
 
