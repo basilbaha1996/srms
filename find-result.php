@@ -17,8 +17,6 @@ include('includes/config.php');
     <link rel="stylesheet" href="css/icheck/skins/flat/blue.css">
     <link rel="stylesheet" href="css/main.css" media="screen">
     <script src="js/modernizr/modernizr.min.js"></script>
-
-    <!-- Custom CSS for header and layout -->
     <style>
     .header {
         background-color: white;
@@ -68,7 +66,7 @@ include('includes/config.php');
 
 <body class="">
     <div class="main-wrapper">
-        <!-- ========== HEADER WITH LARGE LOGO AND TITLE ========== -->
+        <!-- HEADER -->
         <div class="header">
             <img src="logo.jpeg" alt="School Logo">
             <h1>SYSTEMS SCHOOL</h1>
@@ -110,9 +108,9 @@ include('includes/config.php');
                                                 $sql = "SELECT * from tblclasses";
                                                 $query = $dbh->prepare($sql);
                                                 $query->execute();
-                                                $results=$query->fetchAll(PDO::FETCH_OBJ);
+                                                $results = $query->fetchAll(PDO::FETCH_OBJ);
                                                 if($query->rowCount() > 0) {
-                                                    foreach($results as $result) {   ?>
+                                                    foreach($results as $result) { ?>
                                                 <option value="<?php echo htmlentities($result->id); ?>">
                                                     <?php echo htmlentities($result->ClassName); ?>&nbsp;
                                                     Section-<?php echo htmlentities($result->Section); ?>
@@ -127,10 +125,26 @@ include('includes/config.php');
                                             <select name="exam_category" id="exam_category" class="form-control"
                                                 required="required">
                                                 <option value="">Select Exam Category</option>
-                                                <option value="First Exam">First Exam</option>
-                                                <option value="Second Exam">Second Exam</option>
-                                                <option value="Midterm">Midterm</option>
-                                                <option value="Final Exam">Final Exam</option>
+                                                <?php 
+                                                // Fetch all active exam categories from tblexamcategories
+                                                $sql = "SELECT id, exam_category, exam_date FROM tblexamcategories WHERE status = 'Active'";
+                                                $query = $dbh->prepare($sql);
+                                                $query->execute();
+                                                $categories = $query->fetchAll(PDO::FETCH_OBJ);
+
+                                                if ($query->rowCount() > 0) {
+                                                    foreach($categories as $category) { 
+                                                        // Format exam category as "Exam Category - Month Year"
+                                                        $formatted_date = date('F Y', strtotime($category->exam_date));
+                                                        ?>
+                                                <option value="<?php echo htmlentities($category->id); ?>">
+                                                    <?php echo htmlentities($category->exam_category . " - " . $formatted_date); ?>
+                                                </option>
+                                                <?php }
+                                                } else {
+                                                    echo "<option value=''>No active exam categories available</option>";
+                                                }
+                                                ?>
                                             </select>
                                         </div>
 

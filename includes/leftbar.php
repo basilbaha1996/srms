@@ -50,6 +50,7 @@
                     <a href="#"><i class="fa fa-info-circle"></i> <span>Result</span> <i
                             class="fa fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
+                        <li><a href="exam-category.php"><i class="fa fa-bars"></i> <span>Exam Category</span></a></li>
                         <li><a href="add-result.php"><i class="fa fa-bars"></i> <span>Add Result</span></a></li>
                         <li><a href="manage-results.php"><i class="fa fa fa-server"></i> <span>Manage Result</span></a>
                         </li>
@@ -61,11 +62,14 @@
                     <a href="#"><i class="fa fa-cogs"></i> <span>Admin Settings</span> <i
                             class="fa fa-angle-right arrow"></i></a>
                     <ul class="child-nav">
+
                         <li><a href="change-password.php"><i class="fa fa-key"></i> <span>Change Username and
-                                    Password</span></a></li>
-                        <li><a href="add-admin.php"><i class="fa fa-user-plus"></i> <span>Add New Admin</span></a></li>
-                    </ul>
+                        <li><a href="add-admin.php"><i class="fa fa-user-plus"></i> <span>Add New Admin</span></a>
+                        </li>
+                        Password</span></a>
                 </li>
+            </ul>
+            </li>
 
             </ul>
         </div>

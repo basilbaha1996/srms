@@ -1,3 +1,11 @@
+<?php
+session_start();
+if (!isset($_SESSION['alogin']) || $_SESSION['alogin'] == '') {
+    header("Location: index.php");
+    exit();
+}
+?>
+
 <nav class="navbar top-navbar bg-white box-shadow">
     <div class="container-fluid">
         <div class="row">
@@ -6,7 +14,7 @@
                     <img src="logo.jpeg" alt="School Logo"
                         style="height: 45px; width: auto; display: inline-block; vertical-align: middle; margin-right: 10px;">
                     <span style="display: inline-block; vertical-align: middle;">
-                        student result management system || SYSTEMS SCHOOL
+                        Student Result Management System || SYSTEMS SCHOOL
                     </span>
                 </a>
                 <span class="small-nav-handle hidden-sm hidden-xs"><i class="fa fa-outdent"></i></span>

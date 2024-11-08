@@ -3,22 +3,25 @@ session_start();
 error_reporting(0);
 include('includes/config.php');
 
+// Clear session data if the user has an active session
 if ($_SESSION['alogin'] != '') {
     $_SESSION['alogin'] = '';
 }
 
+// Handle login form submission
 if (isset($_POST['login'])) {
     $uname = $_POST['username'];
-    $password = md5($_POST['password']);
-    
-    // Query to check username and password in admin table
+    $password = md5($_POST['password']); // Hash password with md5 for basic security
+
+    // Query to validate the username and password in the admin table
     $sql = "SELECT UserName, Password FROM admin WHERE UserName=:uname and Password=:password";
     $query = $dbh->prepare($sql);
     $query->bindParam(':uname', $uname, PDO::PARAM_STR);
     $query->bindParam(':password', $password, PDO::PARAM_STR);
     $query->execute();
     $results = $query->fetchAll(PDO::FETCH_OBJ);
-    
+
+    // Redirect to dashboard if valid login
     if ($query->rowCount() > 0) {
         $_SESSION['alogin'] = $_POST['username'];
         echo "<script type='text/javascript'> document.location = 'dashboard.php'; </script>";
@@ -67,8 +70,6 @@ if (isset($_POST['login'])) {
     /* Header section styling */
     .header {
         background-color: white;
-        /* Bootstrap Primary Blue */
-        color: white;
         padding: 20px 0;
         text-align: center;
         margin-bottom: 40px;

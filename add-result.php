@@ -1,67 +1,103 @@
 <?php
 session_start();
-error_reporting(0);
+error_reporting(E_ALL);
 include('includes/config.php');
-if(strlen($_SESSION['alogin'])=="") {   
-    header("Location: index.php"); 
-}
-else {
-    if(isset($_POST['submit'])) {
-        $marks = array();
-        $class = $_POST['class'];
-        $studentid = $_POST['studentid']; 
-        $mark = $_POST['marks'];
-        $exam_category = $_POST['exam_category'];  // Exam category
-        $exam_date = $_POST['exam_date'];          // Exam date
 
-        // Check if a result for the same student, class, exam category, and exam date already exists
-        $checkResult = "SELECT * FROM tblresult 
-                        WHERE StudentId = :studentid 
-                        AND ClassId = :class 
-                        AND exam_category = :exam_category 
-                        AND exam_date = :exam_date";
-        $query = $dbh->prepare($checkResult);
-        $query->bindParam(':studentid', $studentid, PDO::PARAM_STR);
-        $query->bindParam(':class', $class, PDO::PARAM_STR);
-        $query->bindParam(':exam_category', $exam_category, PDO::PARAM_STR);
-        $query->bindParam(':exam_date', $exam_date, PDO::PARAM_STR);
-        $query->execute();
-        $resultExists = $query->rowCount();
+// Enable PDO Exception mode to handle and display errors clearly
+$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        if ($resultExists > 0) {
-            $error = "Result Already Declared for this Student, Class, Exam Category, and Date";
+// Initialize $msg and $error to prevent "undefined variable" warnings
+$msg = "";
+$error = "";
+
+if (strlen($_SESSION['alogin']) == "") {
+    header("Location: index.php");
+} else {
+    if (isset($_POST['submit'])) {
+        // Extract form data
+        $marks = $_POST['marks'] ?? [];
+        $class = $_POST['class'] ?? '';
+        $studentid = $_POST['studentid'] ?? '';
+        $exam_category = $_POST['exam_category'] ?? '';  // Exam category
+        $exam_date = $_POST['exam_date'] ?? '';          // Exam date
+
+        // Input validation
+        if (empty($class) || empty($studentid) || empty($exam_category) || empty($exam_date) || empty($marks)) {
+            $error = "All fields are required. Please make sure everything is filled out correctly.";
         } else {
-            // Insert results for each subject (the result check is not based on subjects)
-            $stmt = $dbh->prepare("SELECT tblsubjects.SubjectName, tblsubjects.id FROM tblsubjectcombination 
-                                   JOIN tblsubjects ON tblsubjects.id = tblsubjectcombination.SubjectId 
-                                   WHERE tblsubjectcombination.ClassId = :cid 
-                                   ORDER BY tblsubjects.SubjectName");
-            $stmt->execute(array(':cid' => $class));
-            $sid1 = array();
-            while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                array_push($sid1, $row['id']);
-            }
-
-            for($i = 0; $i < count($mark); $i++) {
-                $mar = $mark[$i];
-                $sid = $sid1[$i];
-
-                $sql = "INSERT INTO tblresult (StudentId, ClassId, SubjectId, marks, exam_category, exam_date) 
-                        VALUES (:studentid, :class, :sid, :marks, :exam_category, :exam_date)";
-                $query = $dbh->prepare($sql);
+            try {
+                // Check if a result for the same student, class, exam category, and exam date already exists
+                $checkResult = "SELECT * FROM tblresult 
+                                WHERE StudentId = :studentid 
+                                AND ClassId = :class 
+                                AND exam_category = :exam_category 
+                                AND exam_date = :exam_date";
+                $query = $dbh->prepare($checkResult);
                 $query->bindParam(':studentid', $studentid, PDO::PARAM_STR);
                 $query->bindParam(':class', $class, PDO::PARAM_STR);
-                $query->bindParam(':sid', $sid, PDO::PARAM_STR);
-                $query->bindParam(':marks', $mar, PDO::PARAM_STR);
                 $query->bindParam(':exam_category', $exam_category, PDO::PARAM_STR);
                 $query->bindParam(':exam_date', $exam_date, PDO::PARAM_STR);
                 $query->execute();
-                $lastInsertId = $dbh->lastInsertId();
-                if ($lastInsertId) {
-                    $msg = "Result info added successfully";
+                $resultExists = $query->rowCount();
+
+                if ($resultExists > 0) {
+                    $error = "Result Already Declared for this Student, Class, Exam Category, and Date";
                 } else {
-                    $error = "Something went wrong. Please try again";
+                    // Start transaction to ensure all-or-nothing database writes
+                    $dbh->beginTransaction();
+
+                    // Fetch **only active subjects** associated with the given class
+                    $stmt = $dbh->prepare("SELECT tblsubjects.SubjectName, tblsubjects.id 
+                                           FROM tblsubjectcombination 
+                                           JOIN tblsubjects ON tblsubjects.id = tblsubjectcombination.SubjectId 
+                                           WHERE tblsubjectcombination.ClassId = :cid 
+                                           AND tblsubjectcombination.status = 1  -- Only active subjects
+                                           ORDER BY tblsubjects.SubjectName");
+                    $stmt->execute(array(':cid' => $class));
+                    $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $sid1 = array();
+
+                    foreach ($subjects as $row) {
+                        array_push($sid1, $row['id']);
+                    }
+
+                    // Ensure that the number of subjects matches the number of marks provided
+                    if (count($sid1) !== count($marks)) {
+                        $error = "Mismatch between the number of active subjects and the number of marks provided. Active Subjects fetched: " . count($sid1) . ", Marks provided: " . count($marks);
+                    } else {
+                        // Insert results for each subject
+                        foreach ($marks as $i => $mar) {
+                            $sid = $sid1[$i];
+
+                            // Insert result
+                            $sql = "INSERT INTO tblresult (StudentId, ClassId, SubjectId, marks, exam_category, exam_date) 
+                                    VALUES (:studentid, :class, :sid, :marks, :exam_category, :exam_date)";
+                            $query = $dbh->prepare($sql);
+                            $query->bindParam(':studentid', $studentid, PDO::PARAM_STR);
+                            $query->bindParam(':class', $class, PDO::PARAM_STR);
+                            $query->bindParam(':sid', $sid, PDO::PARAM_STR);
+                            $query->bindParam(':marks', $mar, PDO::PARAM_STR);
+                            $query->bindParam(':exam_category', $exam_category, PDO::PARAM_STR);
+                            $query->bindParam(':exam_date', $exam_date, PDO::PARAM_STR);
+
+                            if (!$query->execute()) {
+                                // Rollback the transaction if insert fails
+                                $dbh->rollBack();
+                                $error = "Something went wrong while inserting the results for Subject ID: $sid. Please try again.";
+                                break;
+                            }
+                        }
+
+                        // Commit transaction if no errors
+                        if (empty($error)) {
+                            $dbh->commit();
+                            $msg = "Result info added successfully";
+                        }
+                    }
                 }
+            } catch (Exception $e) {
+                $dbh->rollBack();
+                $error = "Exception occurred: " . $e->getMessage();
             }
         }
     }
@@ -122,8 +158,24 @@ else {
                 'classid1': classId
             },
             success: function(data) {
-                $("#subject").html(
-                    data); // Assuming there is a div with id 'subject' to display the subjects
+                $("#subject").html(data);
+            }
+        });
+    }
+
+    // Function to fetch exam date dynamically based on the selected exam category
+    function getExamDate(examCategoryId) {
+        $.ajax({
+            type: "POST",
+            url: "get_exam_date.php",
+            data: {
+                'exam_category_id': examCategoryId
+            },
+            success: function(data) {
+                $("#exam_date").val(data);
+            },
+            error: function(xhr, status, error) {
+                console.error("Error occurred: " + error);
             }
         });
     }
@@ -133,32 +185,28 @@ else {
         $('#classid').change(function() {
             var classId = $(this).val();
             var examCategory = $('#exam_category').val();
-            getStudent(classId, examCategory); // Fetch students based on class and exam category
-            getSubjects(classId); // Fetch subjects based on class
+            getStudent(classId, examCategory);
+            getSubjects(classId);
         });
 
-        // Trigger AJAX when exam category is changed for students
+        // Trigger AJAX when exam category is changed for students and to get the exam date
         $('#exam_category').change(function() {
-            var examCategory = $(this).val();
+            var examCategoryId = $(this).val();
             var classId = $('#classid').val();
-            getStudent(classId, examCategory); // Fetch students based on class and exam category
+            getStudent(classId, examCategoryId);
+            getExamDate(examCategoryId);
         });
     });
     </script>
-
 </head>
 
 <body class="top-navbar-fixed">
     <div class="main-wrapper">
-        <!-- ========== TOP NAVBAR ========== -->
         <?php include('includes/topbar.php'); ?>
-        <!-- ========== WRAPPER FOR BOTH SIDEBARS & MAIN CONTENT ========== -->
         <div class="content-wrapper">
             <div class="content-container">
-                <!-- ========== LEFT SIDEBAR ========== -->
                 <?php include('includes/leftbar.php'); ?>
                 <div class="main-page">
-
                     <div class="container-fluid">
                         <div class="row page-title-div">
                             <div class="col-md-6">
@@ -200,9 +248,29 @@ else {
                                                     Category</label>
                                                 <div class="col-sm-10">
                                                     <select name="exam_category" id="exam_category" class="form-control"
-                                                        required="required">
-                                                        <option value="First Exam">First Exam</option>
-                                                        <option value="Second Exam">Final Exam</option>
+                                                        required="required" onchange="getExamDate(this.value)">
+                                                        <option value="">Select Exam Category</option>
+                                                        <?php 
+                                                        // Fetch all active exam categories from tblexamcategories
+                                                        try {
+                                                            $sql = "SELECT * FROM tblexamcategories WHERE status = 'Active'";
+                                                            $query = $dbh->prepare($sql);
+                                                            $query->execute();
+                                                            $results = $query->fetchAll(PDO::FETCH_OBJ);
+
+                                                            if ($query->rowCount() > 0) {
+                                                                foreach($results as $result) { ?>
+                                                        <option value="<?php echo htmlentities($result->id); ?>">
+                                                            <?php echo htmlentities($result->exam_category) . " - " . date('Y', strtotime($result->exam_date)); ?>
+                                                        </option>
+                                                        <?php }
+                                                            } else {
+                                                                echo "<option value=''>No active exam categories available</option>";
+                                                            }
+                                                        } catch (Exception $e) {
+                                                            echo "<option value=''>Error fetching categories: " . htmlentities($e->getMessage()) . "</option>";
+                                                        }
+                                                        ?>
                                                     </select>
                                                 </div>
                                             </div>
@@ -211,8 +279,8 @@ else {
                                             <div class="form-group">
                                                 <label for="exam_date" class="col-sm-2 control-label">Exam Date</label>
                                                 <div class="col-sm-10">
-                                                    <input type="date" name="exam_date" id="exam_date"
-                                                        class="form-control" required="required">
+                                                    <input type="text" name="exam_date" id="exam_date"
+                                                        class="form-control" required="required" readonly>
                                                 </div>
                                             </div>
 
@@ -267,16 +335,13 @@ else {
                                                         Result</button>
                                                 </div>
                                             </div>
-
                                         </form>
                                         <!-- Form End -->
-
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
                 <!-- /.content-container -->
             </div>
@@ -295,7 +360,6 @@ else {
         <div class="bottom-centered-logo">
             <img src="logo.jpeg" alt="Bottom Centered Logo">
         </div>
-
 </body>
 
 </html>

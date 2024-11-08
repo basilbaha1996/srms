@@ -103,6 +103,19 @@ include('includes/config.php');
                                                 <p><b>Student Class:</b>
                                                     <?php echo htmlentities($row->ClassName);?>(<?php echo htmlentities($row->Section);?>)
                                                 </p>
+                                                <?php } 
+                                                    // Fetch Exam Category and Date
+                                                    $examQuery = "SELECT exam_category, exam_date FROM tblexamcategories WHERE id = :exam_category_id";
+                                                    $examStmt = $dbh->prepare($examQuery);
+                                                    $examStmt->bindParam(':exam_category_id', $exam_category, PDO::PARAM_STR);
+                                                    $examStmt->execute();
+                                                    $examDetails = $examStmt->fetch(PDO::FETCH_OBJ);
+                                                    if ($examDetails) {
+                                                ?>
+                                                <p><b>Exam Category:</b>
+                                                    <?php echo htmlentities($examDetails->exam_category); ?></p>
+                                                <p><b>Exam Date:</b>
+                                                    <?php echo htmlentities($examDetails->exam_date); ?></p>
                                                 <?php } } ?>
                                             </div>
                                         </div>
@@ -148,17 +161,23 @@ include('includes/config.php');
                                                     <?php 
                                                             $totlcount += $totalmarks;
                                                             $cnt++;
-                                                        } ?>
+                                                        } 
+
+                                                        // Calculate total out of marks
+                                                        $outof = ($cnt - 1) * 100;
+                                                        // Calculate percentage
+                                                        $percentage = ($totlcount * 100) / $outof;
+                                                        ?>
                                                     <tr>
                                                         <th scope="row" colspan="2">Total Marks</th>
                                                         <td><b><?php echo htmlentities($totlcount); ?></b> out of
-                                                            <b><?php echo htmlentities($outof = ($cnt-1)*100); ?></b>
+                                                            <b><?php echo htmlentities($outof); ?></b>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <th scope="row" colspan="2">Percentage</th>
-                                                        <td><b><?php echo htmlentities($percentage = ($totlcount * (100) / $outof)); ?>
-                                                                %</b></td>
+                                                        <td><b><?php echo htmlentities(number_format($percentage, 2)); ?>%</b>
+                                                        </td>
                                                     </tr>
 
                                                     <!-- Add Evaluation based on percentage -->
@@ -166,24 +185,20 @@ include('includes/config.php');
                                                         <th scope="row" colspan="2">Evaluation</th>
                                                         <td><b>
                                                                 <?php
-                                                            if ($percentage >= 90) {
-                                                                echo "Excellent";
-                                                            } elseif ($percentage >= 76) {
-                                                                echo "Very Good";
-                                                            } elseif ($percentage >= 66) {
-                                                                echo "Good";
-                                                            } elseif ($percentage >= 50) {
-                                                                echo "Acceptable";
-                                                            } else {
-                                                                echo "Fail";
-                                                            }
-                                                            ?>
+                                                                if ($percentage >= 90) {
+                                                                    echo "Excellent";
+                                                                } elseif ($percentage >= 76) {
+                                                                    echo "Very Good";
+                                                                } elseif ($percentage >= 66) {
+                                                                    echo "Good";
+                                                                } elseif ($percentage >= 50) {
+                                                                    echo "Acceptable";
+                                                                } else {
+                                                                    echo "Fail";
+                                                                }
+                                                                ?>
                                                             </b>
                                                         </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th scope="row" colspan="2">Download Result</th>
-                                                        <td><b><a href="download-result.php">Download</a></b></td>
                                                     </tr>
                                                     <?php } else { ?>
                                                     <div class="alert alert-warning left-icon-alert" role="alert">
@@ -198,9 +213,9 @@ include('includes/config.php');
                             </div>
 
                             <div class="form-group">
-                                <div class="col-sm-6">
+                                <!-- <div class="col-sm-6">
                                     <a href="index.php">Back to Home</a>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </section>
